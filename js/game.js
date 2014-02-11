@@ -1,15 +1,7 @@
 (function() { 
-    /** 
-     *  RULES:
-     *  Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-     *  Any live cell with two or three live neighbours lives on to the next generation.
-     *  Any live cell with more than three live neighbours dies, as if by overcrowding.
-     *  Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-     * */
-    
-    
     var Game = {
-        rows: 65, // setar novamente em load config
+        /* 65 * 135 == 8.775 */
+		rows: 65, // setar novamente em load config
         columns : 135, // setar novamente em load config
         
         /**
@@ -23,7 +15,7 @@
             // register button events
         },
         
-        canvas: {
+        canvas : {
             canvasElement : null,
             context : null,
             cellSize: null,
@@ -43,21 +35,7 @@
                 
                 this.drawWorld();
             },
-        
-            drawCell : function(x, y, alive) {
-                if (alive) {
-                    // paint cell
-                    this.context.fillStyle = "#0000FF";
-                } else {
-                    this.context.fillStyle = "#FFFFFF";
-                }
-                
-                this.context.fillRect(  1 + (this.totalCellArea * x) + (this.cellSize * x), 
-                                        1 + (this.totalCellArea * y) + (this.cellSize * y),  
-                                        this.cellSize, this.cellSize); 
-                
-            },
-          
+			          
             drawWorld : function() {
                 /* set canvas size dynamically according to number of cells */
                 this.width = 1 + (this.cellSize * Game.columns) + (this.totalCellArea * Game.columns);
@@ -75,13 +53,27 @@
                 for (var i = 0 ; i < Game.rows; i++) {
                     for (var j = 0 ; j < Game.columns; j++) {
                        // if (GOL.listLife.isAlive(i, j)) {
-                            this.drawCell(j, i, false); // TODO
+                        //   this.drawCell(j, i, true); // TODO
                         //} else {
-                        //   this.drawCell(i, j, false); // TODO
+                             this.drawCell(j, i, false); // TODO
                         //}
-                        }
                     }
-                },
+                }
+            },
+				
+            drawCell : function(x, y, alive) {
+                if (alive) {
+                    // paint cell
+                    this.context.fillStyle = "#0000FF";
+                } else {
+                    this.context.fillStyle = "#FFFFFF";
+                }
+                
+                this.context.fillRect(  1 + (this.totalCellArea * x) + (this.cellSize * x), 
+                                        1 + (this.totalCellArea * y) + (this.cellSize * y),  
+                                        this.cellSize, this.cellSize); 
+                
+            },
                 
             switchCell : function(x, y) {
                 // if cell is alive, kill it
@@ -111,7 +103,7 @@
                /* Register Event */
               registerEvent : function(element, event, handler, capture) {
                 // ex: var regex = /pattern/flags;
-                // 'i' - insensitive mode
+                // 'i' - insensitive mode flag
                 if (/msie/i.test(navigator.userAgent)) {
                   element.attachEvent('on' + event, handler);
                 } else {
@@ -120,11 +112,11 @@
               },
               
               getMouseCoords : function(event){
-                var totalOffsetX = 0;
-                var totalOffsetY = 0;
-                var canvasX = 0;
-                var canvasY = 0;
-                var currentElement =  document.getElementById('canvas');
+                var totalOffsetX = 0,
+					totalOffsetY = 0,
+					canvasX = 0,
+					canvasY = 0,
+					currentElement =  document.getElementById('canvas');
                 
                 totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
                 totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
@@ -162,8 +154,18 @@
                 }
             }
             
-            
-        }
+        },
+		
+		algorithm : {
+		   livingCells : null,
+		
+			cell : function (newX, newY) {
+				this.x = newX;
+				this.y = newY;
+			},
+			
+			
+		}
         
     };
     
