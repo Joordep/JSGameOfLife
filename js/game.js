@@ -1,8 +1,7 @@
 (function() { 
     var Game = {
-        /* 65 * 135 == 8.775 */
-		rows: 65, // setar novamente em load config
-        columns : 135, // setar novamente em load config
+				rows: 65, // setar novamente em load config
+        columns : 130, // setar novamente em load config
         
         /**
          * On window load
@@ -11,7 +10,6 @@
             // init / reset algorithm
             // load config
             Game.canvas.init();
-            // load canvas
             // register button events
         },
         
@@ -22,6 +20,7 @@
             totalCellSpace : null, // ensures cell division between the gray background
             width : null,
             height : null,
+			ages : null, // dead == 0 / alive > 0 / the higher the number, the older the cell is
             
             init : function() {
                 this.canvasElement = document.getElementById('canvas');
@@ -32,9 +31,23 @@
                 Game.helpers.registerEvent(this.canvasElement, "mousedown", Game.handlers.canvasMouseDown, false);
                 Game.helpers.registerEvent(this.canvasElement, "mouseup", Game.handlers.canvasMouseUp, false);
                 Game.helpers.registerEvent(this.canvasElement, "mousemove", Game.handlers.canvasMouseMove, false);
-                
-                this.drawWorld();
+
+				this.resetWorld();
+				this.drawWorld(); // FIXME -- this must be moved 
             },
+			
+			/*
+			 * Clear world
+			 */
+			resetWorld : function() {
+				this.ages = [];
+				for (var i = 0; i < Game.columns; i++) {
+					this.ages[i] = [];
+					for (var j = 0; j < Game.rows; j++) {
+						this.ages[i][j] = 0;
+					}
+				}
+			},
 			          
             drawWorld : function() {
                 /* set canvas size dynamically according to number of cells */
@@ -50,20 +63,19 @@
                 this.context.fillRect(0, 0, this.width, this.height);
                 
                 /* draw cells starting from the top, left to right */
-                for (var i = 0 ; i < Game.rows; i++) {
-                    for (var j = 0 ; j < Game.columns; j++) {
-                       // if (GOL.listLife.isAlive(i, j)) {
-                        //   this.drawCell(j, i, true); // TODO
-                        //} else {
-                             this.drawCell(j, i, false); // TODO
-                        //}
+                for (var i = 0 ; i < Game.columns; i++) {
+                    for (var j = 0 ; j < Game.rows; j++) {
+                        if (this.ages[i][j] > 0) {
+							this.drawCell(i, j, true); 
+                        } else {
+							this.drawCell(i, j, false);
+                        }
                     }
                 }
             },
 				
             drawCell : function(x, y, alive) {
                 if (alive) {
-                    // paint cell
                     this.context.fillStyle = "#0000FF";
                 } else {
                     this.context.fillStyle = "#FFFFFF";
@@ -76,60 +88,64 @@
             },
                 
             switchCell : function(x, y) {
-                // if cell is alive, kill it
-                // remove from list of live cells
-                //this.changeCellToDead(x, y);
-                
-                // if cell is dead, make a new one
-                // add to list of live cells
-                this.changeCellToAlive(x, y);
-
+                if (this.ages[x][y] > 0) {
+					this.changeCellToDead(x, y);
+                } else {
+					this.changeCellToAlive(x, y);
+				}
             },
             
             changeCellToDead : function(x, y) {
                 if (x >= 0 && x < Game.columns && y >= 0 && y < Game.rows) {
                     this.drawCell(x, y, false);
+					this.ages[x][y] = 0;
+					
                 }
             },
             
             changeCellToAlive : function(x, y) {
                 if (x >= 0 && x < Game.columns && y >= 0 && y < Game.rows) {
                     this.drawCell(x, y, true);
+					this.ages[x][y] = 1;
                 }
             }
         },
         
         helpers : { 
-               /* Register Event */
-              registerEvent : function(element, event, handler, capture) {
-                // ex: var regex = /pattern/flags;
-                // 'i' - insensitive mode flag
-                if (/msie/i.test(navigator.userAgent)) {
-                  element.attachEvent('on' + event, handler);
-                } else {
-                  element.addEventListener(event, handler, capture);
-                }
-              },
-              
-              getMouseCoords : function(event){
-                var totalOffsetX = 0,
+			/** 
+			*	Register Event 
+			*/
+			registerEvent : function(element, event, handler, capture) {
+			// ex: var regex = /pattern/flags;
+			// 'i' - insensitive mode flag
+				if (/msie/i.test(navigator.userAgent)) {
+				  element.attachEvent('on' + event, handler);
+				} else {
+				  element.addEventListener(event, handler, capture);
+				}
+			},
+
+			/** 
+			*	Get mouse coords within the <canvas> element 
+			*/
+			getMouseCoords : function(event){
+				var totalOffsetX = 0,
 					totalOffsetY = 0,
 					canvasX = 0,
 					canvasY = 0,
 					currentElement =  document.getElementById('canvas');
-                
-                totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
-                totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
-                
-                /** (Game.canvas.cellSize + 1) == cell plus gray area.
-                *** ceil(... - 1) instead of floor(...) because of floating-point rounding 
-                *** near right border of each cell, which would make 4.9 turn into floor(5) instead of floor(4.9)
-                */
-                canvasX = Math.ceil(((event.pageX - totalOffsetX) / (Game.canvas.cellSize + 1)) - 1);
-                canvasY = Math.ceil(((event.pageY - totalOffsetY) / (Game.canvas.cellSize + 1)) - 1);
-                return {x:canvasX, y:canvasY};
-            }
-          
+
+				totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+				totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+
+				
+				//	(Game.canvas.cellSize + 1) == cell plus gray area.
+				//	ceil(... - 1) instead of floor(...) because of floating-point rounding 
+				//	near right border of each cell, which would make 4.9 turn into floor(5) instead of floor(4.9) 
+				canvasX = Math.ceil(((event.pageX - totalOffsetX) / (Game.canvas.cellSize + 1)) - 1);
+				canvasY = Math.ceil(((event.pageY - totalOffsetY) / (Game.canvas.cellSize + 1)) - 1);
+				return {x:canvasX, y:canvasY};
+			}
         },
         
         handlers : {
@@ -141,6 +157,8 @@
                 var coords = Game.helpers.getMouseCoords(event);
                 Game.canvas.switchCell(coords.x, coords.y);
                 Game.handlers.mouseDown = true;
+				lastX = coords.x; 
+				lastY = coords.y;
             },
             
             canvasMouseUp : function() {
@@ -150,21 +168,23 @@
             canvasMouseMove : function(event) {
                 if (Game.handlers.mouseDown === true) {
                     var coords = Game.helpers.getMouseCoords(event);
-                    Game.canvas.switchCell(coords.x, coords.y);
+					if (coords.x != lastX || coords.y != lastY) {
+						Game.canvas.switchCell(coords.x, coords.y);
+						lastX = coords.x;
+						lastY = coords.y;
+					}
                 }
             }
             
         },
 		
 		algorithm : {
-		   livingCells : null,
+		   livingCells : [],
 		
 			cell : function (newX, newY) {
 				this.x = newX;
 				this.y = newY;
 			},
-			
-			
 		}
         
     };
