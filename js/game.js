@@ -1,7 +1,7 @@
 (function() { 
     var Game = {
-				rows: 65, // setar novamente em load config
-        columns : 130, // setar novamente em load config
+		rows: 65, // plans on setting the variable again in "load config"
+        columns : 130, // plans on setting the variable again in "load config"
         
         /**
          * On window load
@@ -17,10 +17,10 @@
             canvasElement : null,
             context : null,
             cellSize: null,
-            totalCellSpace : null, // ensures cell division between the gray background
+            totalCellArea : null, // ensures cell division between the gray background
             width : null,
             height : null,
-			ages : null, // dead == 0 / alive > 0 / the higher the number, the older the cell is
+			cellsAges : null, // dead == 0 / alive > 0 / the higher the number, the older the cell is
             
             init : function() {
                 this.canvasElement = document.getElementById('canvas');
@@ -40,11 +40,11 @@
 			 * Clear world
 			 */
 			resetWorld : function() {
-				this.ages = [];
+				this.cellsAges = [];
 				for (var i = 0; i < Game.columns; i++) {
-					this.ages[i] = [];
+					this.cellsAges[i] = [];
 					for (var j = 0; j < Game.rows; j++) {
-						this.ages[i][j] = 0;
+						this.cellsAges[i][j] = 0;
 					}
 				}
 			},
@@ -65,7 +65,7 @@
                 /* draw cells starting from the top, left to right */
                 for (var i = 0 ; i < Game.columns; i++) {
                     for (var j = 0 ; j < Game.rows; j++) {
-                        if (this.ages[i][j] > 0) {
+                        if (this.cellsAges[i][j] > 0) {
 							this.drawCell(i, j, true); 
                         } else {
 							this.drawCell(i, j, false);
@@ -80,15 +80,14 @@
                 } else {
                     this.context.fillStyle = "#FFFFFF";
                 }
-                
+
                 this.context.fillRect(  1 + (this.totalCellArea * x) + (this.cellSize * x), 
                                         1 + (this.totalCellArea * y) + (this.cellSize * y),  
                                         this.cellSize, this.cellSize); 
-                
             },
                 
             switchCell : function(x, y) {
-                if (this.ages[x][y] > 0) {
+                if (this.cellsAges[x][y] > 0) {
 					this.changeCellToDead(x, y);
                 } else {
 					this.changeCellToAlive(x, y);
@@ -98,15 +97,16 @@
             changeCellToDead : function(x, y) {
                 if (x >= 0 && x < Game.columns && y >= 0 && y < Game.rows) {
                     this.drawCell(x, y, false);
-					this.ages[x][y] = 0;
-					
+					this.cellsAges[x][y] = 0;
+					Game.algorithm.removeCell(x, y);
                 }
             },
             
             changeCellToAlive : function(x, y) {
                 if (x >= 0 && x < Game.columns && y >= 0 && y < Game.rows) {
                     this.drawCell(x, y, true);
-					this.ages[x][y] = 1;
+					this.cellsAges[x][y] = 1;
+                    Game.algorithm.addCell(x, y);
                 }
             }
         },
@@ -179,12 +179,37 @@
         },
 		
 		algorithm : {
-		   livingCells : [],
+		   livingCellsMap : {}, // where 'x' is the key
 		
-			cell : function (newX, newY) {
-				this.x = newX;
-				this.y = newY;
-			},
+            addCell : function (x, y) {                    
+                if (this.livingCellsMap[x] === undefined) {
+                    this.livingCellsMap[x] = [];
+                }
+                this.livingCellsMap[x].push(y);
+            },
+
+            removeCell : function (x, y) {
+                if (this.livingCellsMap[x] !== undefined) {
+                    var index = this.livingCellsMap[x].indexOf(y);
+                    this.livingCellsMap[x][index] = null
+                }
+            },
+
+            checksForTopNeighbors : function (x, y) {
+                if (this.livingCellsMap[++x] !== undefined) {
+                    
+                }
+            }, 
+
+            checksForSideNeighbors : function (x, y) {
+                
+            },
+
+            checksForLowNeighbors : function (x, y) {
+                if (this.livingCellsMap[++x] !== undefined) {
+                    
+                }
+            },
 		}
         
     };
